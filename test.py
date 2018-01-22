@@ -30,7 +30,6 @@ def getTCC(classObj):
     numberOfShares = 0
     for x in range(0, len(methods)):
         for y in range(x+1, len(methods)):
-            #print(methods[x].name() + " vs. " + methods[y].name())
             numberOfPairs += 1
             atrrsAccessedInMethodX = methods[x].ents("Use, Set", "Variable ~unresolved ~unknown")
             atrrsAccessedInMethodY = methods[y].ents("Use, Set", "Variable ~unresolved ~unknown")
@@ -41,42 +40,40 @@ def getTCC(classObj):
             for attr in atrrsAccessedInMethodY:
                 atrrsAccessedInMethodYNames.add(attr.longname())
             commonAttrs = atrrsAccessedInMethodXNames.intersection(atrrsAccessedInMethodYNames)
-            #print(atrrsAccessedInMethodX)
-            #print(atrrsAccessedInMethodY)
-           # print(methods[x].name() + " vs. " + methods[y].name())
-           # print(atrrsAccessedInMethodXNames)
-           # print(atrrsAccessedInMethodYNames)
-           # print(commonAttrs)
-           # print(numberOfShares)
             for atrrName in commonAttrs:
                 if aclass.longname() in atrrName:
                     numberOfShares += 1
-                    #if "SwallowAbortedUploads" in methods[x].name():
-                        #print("FOUND!")
-                        #(numberOfShares)
-                        #sys.exit(0)
                     break
     if numberOfPairs == 0:
-        # NOTE: Default is 1.0...
+        # NOTE: Default is currently 1.0
         return 1.0
     else:
         return (numberOfShares/numberOfPairs)*1.0
 
 
-
-# God Class
-# - ATFD (Access to Foreign Data) > Few
-# - WMC (Weighted Method Count) >= Very High --- 'SumCyclomaticModified'
-# - TCC (Tight Class Cohesion) < 1/3
-#
+godClasses = set()
 
 for aclass in db.ents("Class"):
-    if "org.apache.catalina" in aclass.longname(): #.core.StandardContext
-        classMetricATFD = getATFD(aclass)
-        classMetricWMC = getWMC(aclass)
-        classMetricTCC = getTCC(aclass)
+    classLongName = aclass.longname()
 
-        # TODO: Use non-constant values
-        classSmellGod = (classMetricATFD > 10) and (classMetricWMC >= 50) and (classMetricTCC < 0.33)
+    # ---- Get Metrics ----
+    classMetricATFD = getATFD(aclass)
+    classMetricWMC = getWMC(aclass)
+    classMetricTCC = getTCC(aclass)
 
-        print("God Class = " + str(classSmellGod) + "\tATFD = " + str(classMetricATFD) + "\tWMC = " + str(classMetricWMC) + "\tTCC = " + str(classMetricTCC) + "\t" + aclass.longname())
+    # ---- Determine Code Smells ----
+    # TODO: Use non-constant values
+
+    # God Class
+    # - ATFD (Access to Foreign Data) > Few
+    # - WMC (Weighted Method Count) >= Very High
+    # - TCC (Tight Class Cohesion) < 1/3
+    classSmellGod = (classMetricATFD > 10) and (classMetricWMC >= 50) and (classMetricTCC < 0.33)
+
+    if classSmellGod:
+        godClasses.add(classLongName)
+
+    print("God Class = " + str(classSmellGod) + "\tATFD = " + str(classMetricATFD) + "\tWMC = " + str(classMetricWMC) + "\tTCC = " + str(classMetricTCC) + "\t" + classLongName)
+
+print("God Classes (count = " + str(len(godClasses)) + "):")
+print(godClasses)
