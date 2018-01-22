@@ -7,23 +7,24 @@ print("hello!")
 
 db = understand.open("C:\\Users\\cb1782\\MyUnderstandProject.udb")
 
-for aclass in db.ents("Class"):
-    # print directory name
-    #print(aclass.longname())
-    #print(aclass.metrics())
+def getATFD(classObj):
     classATFD = 0
-    #if aclass.longname() == "org.apache.catalina.core.StandardContext":
     for amethod in aclass.ents("Define", "Method"):
-        #print("|||> " + amethod.kindname())
-        #print("---METHOD--> " + amethod.longname())
-        #print(amethod.metrics())
         # https://scitools.com/documents/manuals/html/understand_api/wwhelp/wwhimpl/js/html/wwhelp.htm
         # https://scitools.com/documents/manuals/html/understand_api/wwhelp/wwhimpl/js/html/wwhelp.htm
         for aent in amethod.ents("Call, Use, Set", "Method ~unresolved ~unknown, Variable ~unresolved ~unknown"):
             if aclass.longname() not in aent.longname():
                 classATFD += 1
-                #print("      |+++" + aent.kindname() + "+++>" + aent.longname())
-    print("ATFD for " + aclass.longname() + ": " + str(classATFD))
+    return classATFD
+
+
+def getWMC(classObj):
+    return classObj.metric(["SumCyclomaticModified"])['SumCyclomaticModified'] or 0
+
+
+def getTCC(classObj):
+    #TODO
+    return 0
 
 print(db.metrics())
 
@@ -32,3 +33,11 @@ print(db.metrics())
 # - WMC (Weighted Method Count) >= Very High --- 'SumCyclomaticModified'
 # - TCC (Tight Class Cohesion) < 1/3
 #
+
+for aclass in db.ents("Class"):
+    classMetricATFD = getATFD(aclass)
+    classMetricWMC = getWMC(aclass)
+    classMetricTCC = getTCC(aclass)
+    classSmellGod = (classMetricATFD > 100) and (classMetricWMC >= 10) and (classMetricTCC < 0.33)
+
+    print("God Class = " + str(classSmellGod) + "\tATFD = " + str(classMetricATFD) + "\tWMC = " + str(classMetricWMC) + "\tTCC = " + str(classMetricTCC) + "\t" + aclass.longname())
