@@ -8,6 +8,14 @@ print("hello!")
 
 db = understand.open("C:\\Users\\cb1782\\MyUnderstandProject.udb")
 
+outputDirPrefix = "C:\\Users\\cb1782\\"
+csvOutputFilename = "reportoutput.csv"
+delm = "\t"
+
+outputFile = open(outputDirPrefix + csvOutputFilename, "w")
+outputData = "Class" + delm + "God Class"+"\n"
+outputFile.write(outputData)
+
 def getATFD(classObj):
     classATFD = 0
     for amethod in aclass.ents("Define", "Method"):
@@ -75,5 +83,9 @@ for aclass in db.ents("Class"):
 
     print("God Class = " + str(classSmellGod) + "\tATFD = " + str(classMetricATFD) + "\tWMC = " + str(classMetricWMC) + "\tTCC = " + str(classMetricTCC) + "\t" + classLongName)
 
+    outputFile.write(classLongName + delm + str(classSmellGod) + "\n")
+
 print("God Classes (count = " + str(len(godClasses)) + "):")
 print(godClasses)
+
+outputFile.close()
