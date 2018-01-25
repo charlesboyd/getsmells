@@ -58,7 +58,7 @@ def getTCC(classObj):
 
 def extractSmells(projectPath, csvOutputPath, log):
     db = understand.open(projectPath)
-    delm = "\t"
+    delm = ","
 
     outputFile = open(csvOutputPath, "w")
     outputData = "Class" + delm + "God Class" + "\n"
