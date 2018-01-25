@@ -11,8 +11,14 @@ else:
     undPath = "/Applications/Understand.app/Contents/MacOS/und"
 
 
+def makecmd(args):
+    if platform.system() == "Windows":
+        return args
+    else:
+        return " ".join(args)
+
 def analyzeCode(sourcePath, projectPath, log):
-    understandVersion = str(subprocess.getoutput([undPath, 'version']))
+    understandVersion = str(subprocess.getoutput(makecmd([undPath, 'version'])))
     if "Build" not in understandVersion:
         print("Error: Could not run the Understand command line (could not run '" + undPath + "'); check the PATH")
         log.write("Error: '$ und version' returned '" + understandVersion + "'")
@@ -20,16 +26,16 @@ def analyzeCode(sourcePath, projectPath, log):
 
     log.write("Understand version = " + understandVersion + "\n")
     log.write("Create project output = " +
-              str(subprocess.getoutput([undPath, 'create', '-languages', 'Java', projectPath])) + "\n")
-    undOutput = str(subprocess.getoutput([undPath, 'add', sourcePath, projectPath]))
+              str(subprocess.getoutput(makecmd([undPath, 'create', '-languages', 'Java', projectPath]))) + "\n")
+    undOutput = str(subprocess.getoutput(makecmd([undPath, 'add', sourcePath, projectPath])))
     print("\t" + undOutput)
     log.write("Add files output = " + undOutput + "\n")
     log.write("Update settings output = " +
-              str(subprocess.getoutput([undPath, 'settings', '-metrics', 'all', projectPath])) + "\n")
+              str(subprocess.getoutput(makecmd([undPath, 'settings', '-metrics', 'all', projectPath]))) + "\n")
 
     print("\tStarting metric analysis...")
     log.write("Starting metric analysis...\n" +
-              str(subprocess.getoutput([undPath, 'analyze', projectPath])) + "\n")
+              str(subprocess.getoutput(makecmd([undPath, 'analyze', projectPath]))) + "\n")
 
     print("\tMetric analysis complete")
 

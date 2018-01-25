@@ -65,6 +65,11 @@ if __name__ == '__main__':
     # cli(sys.argv)
 
     # For testing
-    cli(["",
+    if platform.system() == "Windows":
+        cli(["",
          "C:/Users/cb1782/Downloads/apache-tomcat-7.0.82-src/apache-tomcat-7.0.82-src",
          "C:/Users/cb1782/output1/"])
+    else:
+        cli(["",
+         "/Users/charles/Documents/DIS/code/apache-tomcat-8.0.49-src",
+         "/Users/charles/Documents/DIS/output1/"])
