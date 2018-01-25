@@ -2,8 +2,7 @@ import sys
 import platform
 
 if platform.system() == "Windows":
-    # sys.path.append('')
-    print("Ensure the Python Understand lib is in the PYTHONPATH")
+    sys.path.append('C:/Program Files/SciTools/bin/pc-win64/Python')
 else:
     sys.path.append('/Applications/Understand.app/Contents/MacOS/Python')
 
