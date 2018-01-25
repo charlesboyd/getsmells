@@ -25,6 +25,14 @@ bit-ness of your Understand install
 (defaults to the current directory)   
 
 
+## Smells
+All extracted smells are based off the criteria outlined in [Object-Oriented Metrics in Practice](http://www.springer.com/us/book/9783540244295) by [Michele Lanza](http://www.inf.usi.ch/lanza/index.html) and [Radu Marinescu](http://loose.upt.ro/reengineering/research/).
+
+**God Class**
+- ATFD (Access to Foreign Data) > Few
+- WMC (Weighted Method Count) >= Very High
+- TCC (Tight Class Cohesion) < 1/3
+
 ## Useful Links
 **Understand API Documentation**   
 * https://scitools.com/sup/api-2/  
