@@ -21,30 +21,44 @@ def cli(args):
     if not os.path.isdir(sourcePath):
         print("Error: The specified source path either does not exist or is not a directory")
         return
+    sourcePath = os.path.normcase(os.path.join(sourcePath, ''))  # fix slash direction and trailing slash
 
-    runName = os.path.basename(sourcePath)
+    runName = os.path.split(os.path.split(sourcePath)[0])[1]
 
-    outputPath = ""
+    outputPath = os.path.dirname(os.path.realpath(__file__))
     if len(args) >= 3:
         outputPath = args[2]
+        if not os.path.exists(outputPath):
+            os.makedirs(outputPath)
 
-    outputCsvFile = outputPath + "/" + runName + "-smells.csv"
-    outputLogFile = outputPath + "/" + runName + "-log.txt"
-    print("log file = " + outputLogFile)
-    projectDirectoryPath = outputPath + "/UnderstandProjects"
+    outputPath = os.path.normcase(os.path.join(outputPath, ''))  # fix slash direction and trailing slash
+
+    outputCsvFile = os.path.join(outputPath, runName + "-smells.csv")
+    outputLogFile = os.path.join(outputPath, runName + "-log.txt")
+
+    welcomeMsg = "Starting GetSmells on '" + sourcePath + ' (output at ' + outputPath + ")"
+    print(welcomeMsg)
+    log = open(outputLogFile, "w+")
+    log.write(welcomeMsg + "\n")
+
+    projectDirectoryPath = os.path.join(outputPath, "UnderstandProjects")
     if not os.path.exists(projectDirectoryPath):
         os.makedirs(projectDirectoryPath)
-    projectPath = projectDirectoryPath + "/" + runName + ".udb"
+    projectPath = os.path.join(projectDirectoryPath, runName + ".udb")
 
     print("Step 1/2: Creating an Understand Project for '" + runName + "'")
-    if understandcli.analyzeCode(sourcePath, projectPath, outputLogFile) == 1:
+    if understandcli.analyzeCode(sourcePath, projectPath, log) == 1:
+        log.close()
         return
 
     print("Step 2/2: Extracting code smells from metrics on '" + runName + "'")
-    # if understandapi.extractSmells(projectPath, outputCsvFile, outputLogFile) == 1:
-    #    return
+    if understandapi.extractSmells(projectPath, outputCsvFile, log) == 1:
+        log.close()
+        return
 
-    print("Complete! Code smell extraction for '" + runName + "' is complete.")
+    print("GetSmells complete!")
+    log.write("GetSmells Complete! (End of log)")
+    log.close()
 
 
 if __name__ == '__main__':
@@ -53,4 +67,4 @@ if __name__ == '__main__':
     # For testing
     cli(["",
          "C:/Users/cb1782/Downloads/apache-tomcat-7.0.82-src/apache-tomcat-7.0.82-src",
-         "C:/Users/cb1782/output1"])
+         "C:/Users/cb1782/output1/"])

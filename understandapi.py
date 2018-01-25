@@ -1,10 +1,9 @@
 import understand
-
-
 # Relevant Understand API Documentation:
 # https://scitools.com/sup/api-2/
 # https://scitools.com/documents/manuals/python/understand.html
 # help(understand)
+
 
 def getATFD(classObj):
     classATFD = 0
@@ -49,7 +48,7 @@ def getTCC(classObj):
         return (numberOfShares / numberOfPairs) * 1.0
 
 
-def extractSmells(projectPath, csvOutputPath):
+def extractSmells(projectPath, csvOutputPath, log):
     db = understand.open(projectPath)
     delm = "\t"
 
@@ -58,6 +57,8 @@ def extractSmells(projectPath, csvOutputPath):
     outputFile.write(outputData)
 
     godClasses = set()
+
+    print("\tStarting code smell extraction for 1 code smell on "+str(len(db.ents("Class"))) + " classes...")
 
     for aclass in db.ents("Class"):
         classLongName = aclass.longname()
@@ -79,19 +80,26 @@ def extractSmells(projectPath, csvOutputPath):
         if classSmellGod:
             godClasses.add(classLongName)
 
-        print("God Class = " + str(classSmellGod) + "\tATFD = " + str(classMetricATFD) + "\tWMC = " + str(
-            classMetricWMC) + "\tTCC = " + str(classMetricTCC) + "\t" + classLongName)
+        log.write("God Class = " + str(classSmellGod) + "\tATFD = " + str(classMetricATFD) + "\tWMC = " + str(
+            classMetricWMC) + "\tTCC = " + str(classMetricTCC) + "\t" + classLongName + "\n")
 
         outputFile.write(classLongName + delm + str(classSmellGod) + "\n")
 
-    print("God Classes (count = " + str(len(godClasses)) + "):")
-    print(godClasses)
+    log.write("God Classes (count = " + str(len(godClasses)) + "): " + str(godClasses) + "\n\n")
 
     outputFile.close()
+
+    log.write("Code smell extraction complete.\n")
+
+    print("\tCode smell extraction complete")
 
 
 if __name__ == '__main__':
     print("Running code smell extraction on an Understand project standalone using defaults")
 
+    logFile = open("C:/Users/cb1782/understandapi-log.txt", "w+")
+
     # Default project and output path
-    extractSmells("C:\\Users\\cb1782\\MyUnderstandProject.udb", "C:\\Users\\cb1782\\reportoutput.csv")
+    extractSmells("C:/Users/cb1782/MyUnderstandProject.udb",
+                  "C:/Users/cb1782/understandapi-csv.csv",
+                  logFile)
