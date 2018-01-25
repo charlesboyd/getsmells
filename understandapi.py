@@ -1,9 +1,17 @@
-import understand
+import sys
+import platform
+
+if platform.system() == "Windows":
+    # sys.path.append('')
+    print("Ensure the Python Understand lib is in the PYTHONPATH")
+else:
+    sys.path.append('/Applications/Understand.app/Contents/MacOS/Python')
+
 # Relevant Understand API Documentation:
 # https://scitools.com/sup/api-2/
 # https://scitools.com/documents/manuals/python/understand.html
 # help(understand)
-
+import understand
 
 def getATFD(classObj):
     classATFD = 0

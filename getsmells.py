@@ -2,6 +2,7 @@ import understandapi
 import understandcli
 import sys
 import os
+import platform
 
 
 def printCliHelp():
