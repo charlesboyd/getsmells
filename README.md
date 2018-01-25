@@ -10,13 +10,19 @@ GetSmells is written to work on either Windows or MacOS (tested on Windows 7 and
 `/Applications/Understand.app` on MacOS); if it is not in the default location, you can modify the paths at 
 the top of both `understandapi.py` and `understandcli.py`.
   * You can request 1-year educational license for Understand [here](https://scitools.com/student/)
-* Python 3: The script is written in Python 3 and your 32-bit/64-bit version of Python 3 should match the 
-bit-ness of your Understand install
+* Python 3: The script is written in Python 3 and, on Windows, your 32-bit/64-bit version of Python 3 should match the 
+bit-ness of your Understand install 
 
-## Use
+## Usage
+`python3 getsmells.py [sourcePath] [outputPath (optional)]`   
 
+**Example**   
+`python3 getsmells.py c:/Users/you/path/to/code c:/Users/you/output`   
 
-
+**Parameters**   
+`sourcePath`: The path to the directory with a single project's code   
+`outputPath`: The directory to output the CSV with code smells, the debug output, and the Understand Projects 
+(defaults to the current directory)   
 
 
 ## Useful Links
