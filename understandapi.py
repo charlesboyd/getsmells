@@ -58,7 +58,7 @@ def extractSmells(projectPath, csvOutputPath, log):
 
     godClasses = set()
 
-    print("\tStarting code smell extraction for 1 code smell on "+str(len(db.ents("Class"))) + " classes...")
+    print("\tExtracting code smells from "+str(len(db.ents("Class"))) + " classes...")
 
     for aclass in db.ents("Class"):
         classLongName = aclass.longname()
@@ -85,7 +85,7 @@ def extractSmells(projectPath, csvOutputPath, log):
 
         outputFile.write(classLongName + delm + str(classSmellGod) + "\n")
 
-    log.write("God Classes (count = " + str(len(godClasses)) + "): " + str(godClasses) + "\n\n")
+    log.write("\n\nGod Classes (count = " + str(len(godClasses)) + "): " + str(godClasses) + "\n\n")
 
     outputFile.close()
 
