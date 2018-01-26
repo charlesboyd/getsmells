@@ -3,7 +3,7 @@
 GetSmells extracts code smells from Java source code using the 
 [Understand API](https://scitools.com/support/understand-api-overview/).   
 
-## Prequisites
+## Prerequisites
 GetSmells is written to work on either Windows or MacOS (tested on Windows 7 and MacOS 10.12)
 * Understand: You must have [Understand](https://scitools.com/features/) installed locally to run the script.
   * It should be installed in the default location for your OS (`C:\Program Files\SciTools\` for Windows or
