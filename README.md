@@ -10,8 +10,8 @@ GetSmells is written to work on either Windows or MacOS (tested on Windows 7 and
 `/Applications/Understand.app` on MacOS); if it is not in the default location, you can modify the paths at 
 the top of both `understandapi.py` and `understandcli.py`.
   * You can request 1-year educational license for Understand [here](https://scitools.com/student/)
-* Python 3: The script is written in Python 3 and, on Windows, your 32-bit/64-bit version of Python 3 should match the 
-bit-ness of your Understand install (developed using 64-bit)
+* Python 3.4+: The script is written for Python 3.4+ and, on Windows, your 32-bit/64-bit version of Python 3 should match the 
+bit-ness of your Understand install (developed using Python 3.6 64-bit)
 
 ## Usage
 `python3 getsmells.py [sourcePath] [outputPath (optional)]`   

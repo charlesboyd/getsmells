@@ -1,5 +1,6 @@
 import sys
 import platform
+import statistics
 
 if platform.system() == "Windows":
     sys.path.append('C:/Program Files/SciTools/bin/pc-win64/Python')
@@ -56,54 +57,69 @@ def getTCC(classObj):
 
 
 def extractSmells(projectPath, csvOutputPath, log):
-    db = understand.open(projectPath)
     delm = ","
+
+    FEW = 4
+    ONE_THIRD = 1/3
+
+    db = understand.open(projectPath)
 
     outputFile = open(csvOutputPath, "w")
     outputData = "Class" + delm + "God Class" + "\n"
     outputFile.write(outputData)
 
-    godClasses = set()
+    print("\tCalculating complex metrics for "+str(len(db.ents("Class"))) + " classes...")
 
-    print("\tExtracting code smells from "+str(len(db.ents("Class"))) + " classes...")
+    classLib = list()
+    allWMC = set()
+    godClasses = set()
 
     for aclass in db.ents("Class"):
         classLongName = aclass.longname()
 
-        # ---- Get Metrics ----
         classMetricATFD = getATFD(aclass)
         classMetricWMC = getWMC(aclass)
         classMetricTCC = getTCC(aclass)
 
-        # ---- Determine Code Smells ----
-        # TODO: Use non-constant values
+        allWMC.add(classMetricWMC)
 
+        classLib.append({"name": classLongName, "ATFD": classMetricATFD, "WMC": classMetricWMC, "TCC": classMetricTCC})
+
+    print("\tApplying code smell thresholds")
+
+    meanWMC = statistics.mean(allWMC)
+    devWMC = statistics.pstdev(allWMC)
+    veryHighWMC = meanWMC + (1.5 * devWMC) # 1.5 std. dev. above the mean (upper ~15%)
+
+    log.write("\n\nWMC: mean = " + str(meanWMC) + ", pstdev = " + str(devWMC) + ", VERY_HIGH = " + str(veryHighWMC) + "\n")
+
+    for aclass in classLib:
         # God Class
         # - ATFD (Access to Foreign Data) > Few
         # - WMC (Weighted Method Count) >= Very High
         # - TCC (Tight Class Cohesion) < 1/3
-        classSmellGod = (classMetricATFD > 10) and (classMetricWMC >= 50) and (classMetricTCC < 0.33)
+        classSmellGod = (aclass["ATFD"] > FEW) and (aclass["WMC"] >= veryHighWMC) and (aclass["TCC"] < ONE_THIRD)
 
         if classSmellGod:
-            godClasses.add(classLongName)
+            godClasses.add(aclass["name"])
 
-        log.write("God Class = " + str(classSmellGod) + "\tATFD = " + str(classMetricATFD) + "\tWMC = " + str(
-            classMetricWMC) + "\tTCC = " + str(classMetricTCC) + "\t" + classLongName + "\n")
+        log.write("God Class = " + str(classSmellGod) + "\tATFD = " + str(aclass["ATFD"]) + "\tWMC = " + 
+                  str(aclass["WMC"]) + "\tTCC = " + str(aclass["TCC"]) + "\t" + aclass["name"] + "\n")
 
-        outputFile.write(classLongName + delm + str(classSmellGod) + "\n")
+        outputFile.write(aclass["name"] + delm + str(classSmellGod) + "\n")
 
     log.write("\n\nGod Classes (count = " + str(len(godClasses)) + "): " + str(godClasses) + "\n\n")
 
     outputFile.close()
 
-    log.write("Code smell extraction complete.\n")
+    log.write("Code smell extraction complete\n")
 
     print("\tCode smell extraction complete")
+    print("\tGod Class = " + str(len(godClasses)))
 
 
 if __name__ == '__main__':
     print("Running code smell extraction on an Understand project standalone using defaults")
-
 
     # Default project and output path
     if platform.system() == "Windows":
