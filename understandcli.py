@@ -54,5 +54,5 @@ if __name__ == '__main__':
     else:
         logFile = open("/Users/charles/Documents/DIS/understandcli-log.txt", "w+")
         analyzeCode("/Users/charles/Documents/DIS/code/apache-tomcat-8.0.49-src",
-                    "/Users/charles/Documents/DIS/understandcli-project.udb",
+                    "/Users/charles/Documents/DIS/understandproject.udb",
                     logFile)

@@ -15,8 +15,8 @@ import understand
 def getATFD(classObj):
     classATFD = 0
     for amethod in classObj.ents("Define", "Method"):
-        # https://scitools.com/documents/manuals/html/understand_api/wwhelp/wwhimpl/js/html/wwhelp.htm
-        # https://scitools.com/documents/manuals/html/understand_api/wwhelp/wwhimpl/js/html/wwhelp.htm
+        # https://scitools.com/documents/manuals/html/understand_api/kindApp121.html
+        # https://scitools.com/documents/manuals/html/understand_api/kindApp158.html
         # NOTE: Includes all foreign methods called, even if not a getter or setter
         for aent in amethod.ents("Call, Use, Set", "Method ~unresolved ~unknown, Variable ~unresolved ~unknown"):
             if classObj.longname() not in aent.longname():
@@ -49,8 +49,8 @@ def getTCC(classObj):
                     numberOfShares += 1
                     break
     if numberOfPairs == 0:
-        # NOTE: Default is currently 1.0
-        return 1.0
+        # NOTE: Default is currently 0.0
+        return 0.0
     else:
         return (numberOfShares / numberOfPairs) * 1.0
 
@@ -104,9 +104,16 @@ def extractSmells(projectPath, csvOutputPath, log):
 if __name__ == '__main__':
     print("Running code smell extraction on an Understand project standalone using defaults")
 
-    logFile = open("C:/Users/cb1782/understandapi-log.txt", "w+")
 
     # Default project and output path
-    extractSmells("C:/Users/cb1782/MyUnderstandProject.udb",
-                  "C:/Users/cb1782/understandapi-csv.csv",
-                  logFile)
+    if platform.system() == "Windows":
+        logFile = open("C:/Users/cb1782/understandapi-log.txt", "w+")
+        extractSmells("C:/Users/cb1782/MyUnderstandProject.udb",
+                      "C:/Users/cb1782/understandapi-csv.csv",
+                      logFile)
+    else:
+        logFile = open("/Users/charles/Documents/DIS/understandapi-log.txt", "w+")
+        extractSmells("/Users/charles/Documents/DIS/understandproject.udb",
+                    "/Users/charles/Documents/DIS/understandapi-csv.csv",
+                    logFile)
+
