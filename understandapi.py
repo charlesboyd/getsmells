@@ -58,15 +58,12 @@ def getTCC(classObj):
 
 def extractSmells(projectPath, csvOutputPath, log):
     delm = ","
+    includeMetricsInCsv = True
 
     FEW = 4
     ONE_THIRD = 1/3
 
     db = understand.open(projectPath)
-
-    outputFile = open(csvOutputPath, "w")
-    outputData = "Class" + delm + "God Class" + "\n"
-    outputFile.write(outputData)
 
     print("\tCalculating complex metrics for "+str(len(db.ents("Class"))) + " classes...")
 
@@ -93,6 +90,12 @@ def extractSmells(projectPath, csvOutputPath, log):
 
     log.write("\n\nWMC: mean = " + str(meanWMC) + ", pstdev = " + str(devWMC) + ", VERY_HIGH = " + str(veryHighWMC) + "\n")
 
+    outputFile = open(csvOutputPath, "w")
+    outputData = "Class" + delm + "God Class"
+    if includeMetricsInCsv:
+            outputData += delm + delm.join(["Metric: ATFD", "Metric: WMC", "Metric: TCC"])
+    outputFile.write(outputData + "\n")
+
     for aclass in classLib:
         # God Class
         # - ATFD (Access to Foreign Data) > Few
@@ -106,7 +109,10 @@ def extractSmells(projectPath, csvOutputPath, log):
         log.write("God Class = " + str(classSmellGod) + "\tATFD = " + str(aclass["ATFD"]) + "\tWMC = " + 
                   str(aclass["WMC"]) + "\tTCC = " + str(aclass["TCC"]) + "\t" + aclass["name"] + "\n")
 
-        outputFile.write(aclass["name"] + delm + str(classSmellGod) + "\n")
+        csvLine = aclass["name"] + delm + str(classSmellGod)
+        if includeMetricsInCsv:
+            csvLine += delm + delm.join([str(aclass["ATFD"]), str(aclass["WMC"]), str(aclass["TCC"])])
+        outputFile.write(csvLine + "\n")
 
     log.write("\n\nGod Classes (count = " + str(len(godClasses)) + "): " + str(godClasses) + "\n\n")
 
