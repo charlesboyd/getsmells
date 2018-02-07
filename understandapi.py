@@ -55,6 +55,11 @@ def getTCC(classObj):
     else:
         return (numberOfShares / numberOfPairs) * 1.0
 
+def getLAA(classObj):
+    return 1
+
+def getFDP(classObj):
+    return 1
 
 def extractSmells(projectPath, csvOutputPath, log):
     delm = ","
@@ -65,22 +70,32 @@ def extractSmells(projectPath, csvOutputPath, log):
 
     db = understand.open(projectPath)
 
-    print("\tCalculating complex metrics for "+str(len(db.ents("Class"))) + " classes...")
+    totalClassesCount = len(db.ents("Class"))
+
+    print("\tCalculating complex metrics for "+str(totalClassesCount) + " classes...")
 
     classLib = list()
     allWMC = set()
+
     godClasses = set()
+    featureEnvyClasses = set()
 
     for aclass in db.ents("Class"):
+        if (len(classLib)+1) % 250 == 0:
+            print("\t\t" + str(round((len(classLib)/totalClassesCount)*100)) + "% complete" ) 
+
         classLongName = aclass.longname()
 
         classMetricATFD = getATFD(aclass)
         classMetricWMC = getWMC(aclass)
         classMetricTCC = getTCC(aclass)
+        classMetricLAA = getLAA(aclass)
+        classMetricFDP = getFDP(aclass)
 
         allWMC.add(classMetricWMC)
 
-        classLib.append({"name": classLongName, "ATFD": classMetricATFD, "WMC": classMetricWMC, "TCC": classMetricTCC})
+        classLib.append({"name": classLongName, "ATFD": classMetricATFD, "WMC": classMetricWMC, "TCC": classMetricTCC,
+            "LAA": classMetricLAA, "FDP": classMetricFDP})
 
     print("\tApplying code smell thresholds")
 
@@ -91,7 +106,7 @@ def extractSmells(projectPath, csvOutputPath, log):
     log.write("\n\nWMC: mean = " + str(meanWMC) + ", pstdev = " + str(devWMC) + ", VERY_HIGH = " + str(veryHighWMC) + "\n")
 
     outputFile = open(csvOutputPath, "w")
-    outputData = "Class" + delm + "God Class"
+    outputData = "Class" + delm + "God Class" + delm + "Feature Envy"
     if includeMetricsInCsv:
             outputData += delm + delm.join(["Metric: ATFD", "Metric: WMC", "Metric: TCC"])
     outputFile.write(outputData + "\n")
@@ -103,25 +118,36 @@ def extractSmells(projectPath, csvOutputPath, log):
         # - TCC (Tight Class Cohesion) < 1/3
         classSmellGod = (aclass["ATFD"] > FEW) and (aclass["WMC"] >= veryHighWMC) and (aclass["TCC"] < ONE_THIRD)
 
+        # Feature Envy
+        # - ATFD (Access to Foreign Data) > Few
+        # - LAA (Locality of Attribute Accesses) < 1/3
+        # - FDP (Foreign Data Providers) <= FEW
+        classSmellFeatureEnvy = (aclass["ATFD"] > FEW) and (aclass["LAA"] < ONE_THIRD) and (aclass["FDP"] <= FEW )
+
         if classSmellGod:
             godClasses.add(aclass["name"])
 
-        log.write("God Class = " + str(classSmellGod) + "\tATFD = " + str(aclass["ATFD"]) + "\tWMC = " + 
-                  str(aclass["WMC"]) + "\tTCC = " + str(aclass["TCC"]) + "\t" + aclass["name"] + "\n")
+        if classSmellFeatureEnvy:
+            featureEnvyClasses.add(aclass["name"])
 
-        csvLine = aclass["name"] + delm + str(classSmellGod)
+        log.write("God Class = " + str(classSmellGod) + "Feature Envy = " + str(classSmellFeatureEnvy) + "\tATFD = " + str(aclass["ATFD"]) 
+            + "\tWMC = " + str(aclass["WMC"]) + "\tTCC = " + str(aclass["TCC"]) + "\t" + aclass["name"] + "\n")
+
+        csvLine = aclass["name"] + delm + str(classSmellGod) + delm + str(classSmellFeatureEnvy)
         if includeMetricsInCsv:
             csvLine += delm + delm.join([str(aclass["ATFD"]), str(aclass["WMC"]), str(aclass["TCC"])])
         outputFile.write(csvLine + "\n")
 
     log.write("\n\nGod Classes (count = " + str(len(godClasses)) + "): " + str(godClasses) + "\n\n")
+    log.write("\n\nFeature Envy (count = " + str(len(featureEnvyClasses)) + "): " + str(featureEnvyClasses) + "\n\n")
 
     outputFile.close()
 
     log.write("Code smell extraction complete\n")
 
     print("\tCode smell extraction complete")
-    print("\tGod Class = " + str(len(godClasses)))
+    print("\t\tGod Class = " + str(len(godClasses)))
+    print("\t\tFeature Envy = " + str(len(featureEnvyClasses)))
 
 
 if __name__ == '__main__':
