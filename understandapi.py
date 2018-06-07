@@ -97,9 +97,9 @@ def extractSmells(projectPath, csvOutputPath, log):
 
         classLongName = aclass.longname()
 
-        classMetricATFD = 0 #getATFD(aclass)
-        classMetricWMC = 0# getWMC(aclass)
-        classMetricTCC = 0# getTCC(aclass)
+        classMetricATFD = getATFD(aclass)
+        classMetricWMC = getWMC(aclass)
+        classMetricTCC = getTCC(aclass)
         classMetricLAA = getLAA(aclass)
         classMetricFDP = getFDP(aclass)
         classMetricLOC = getLOC(aclass)
@@ -110,18 +110,20 @@ def extractSmells(projectPath, csvOutputPath, log):
         classLib.append({"name": classLongName, "ATFD": classMetricATFD, "WMC": classMetricWMC, "TCC": classMetricTCC,
             "LAA": classMetricLAA, "FDP": classMetricFDP, "LOC": classMetricLOC})
 
-    print("\tApplying code smell thresholds")
+    print("\tCalculating system-wide averages and metrics")
 
     meanWMC = statistics.mean(allWMC)
     devWMC = statistics.pstdev(allWMC)
     veryHighWMC = meanWMC + (1.5 * devWMC) # 1.5 std. dev. above the mean (upper ~15%)
     firstQuartileLOC = np.percentile(allLOC, 25)
 
-    log.write("\n\nWMC: mean = " + str(meanWMC) + ", pstdev = " + str(devWMC) + ", VERY_HIGH = " + str(veryHighWMC) + "\n")
-    log.write("\n\nLOC: 1st Quartile = " + str(firstQuartileLOC) + "\n")
+    log.write("WMC: mean = " + str(meanWMC) + ", pstdev = " + str(devWMC) + ", VERY_HIGH = " + str(veryHighWMC) + "\n")
+    log.write("LOC: 1st Quartile = " + str(firstQuartileLOC) + "\n")
+
+    print("\tApplying code smell thresholds")
 
     outputFile = open(csvOutputPath, "w")
-    outputData = "Class" + delm + "God Class" + delm + "Lazy Class" + delm + "Feature Envy"
+    outputData = delm.join(["Class", "God Class", "Lazy Class", "Feature Envy"])
     if includeMetricsInCsv:
             outputData += delm + delm.join(["Metric: ATFD", "Metric: WMC", "Metric: TCC", "Metric: LOC"])
     outputFile.write(outputData + "\n")
@@ -145,33 +147,29 @@ def extractSmells(projectPath, csvOutputPath, log):
 
         if classSmellGod:
             godClasses.add(aclass["name"])
-
         if classSmellLazy:
             lazyClasses.add(aclass["name"])
-
         if classSmellFeatureEnvy:
             featureEnvyClasses.add(aclass["name"])
 
-        log.write("God Class = " + str(classSmellGod) + "Feature Envy = " + str(classSmellFeatureEnvy) + "\tATFD = " + str(aclass["ATFD"]) 
-            + "\tWMC = " + str(aclass["WMC"]) + "\tTCC = " + str(aclass["TCC"]) + "\t" + aclass["name"] + "\n")
-
-        csvLine = aclass["name"] + delm + str(classSmellGod) + delm + str(classSmellLazy) + delm + str(classSmellFeatureEnvy)
+        csvLine = delm.join([aclass["name"], str(classSmellGod), str(classSmellLazy), str(classSmellFeatureEnvy)])
         if includeMetricsInCsv:
             csvLine += delm + delm.join([str(aclass["ATFD"]), str(aclass["WMC"]), str(aclass["TCC"]), str(aclass["LOC"])])
         outputFile.write(csvLine + "\n")
 
-    log.write("\n\nGod Classes (count = " + str(len(godClasses)) + "): " + str(godClasses) + "\n\n")
-    log.write("\n\nLazy Classes (count = " + str(len(lazyClasses)) + "): " + str(lazyClasses) + "\n\n")
-    log.write("\n\nFeature Envy (count = " + str(len(featureEnvyClasses)) + "): " + str(featureEnvyClasses) + "\n\n")
-
     outputFile.close()
 
-    log.write("Code smell extraction complete\n")
+    #log.write("\n\nGod Classes (count = " + str(len(godClasses)) + "): " + str(godClasses) + "\n\n")
+    #log.write("\n\nLazy Classes (count = " + str(len(lazyClasses)) + "): " + str(lazyClasses) + "\n\n")
+    #log.write("\n\nFeature Envy (count = " + str(len(featureEnvyClasses)) + "): " + str(featureEnvyClasses) + "\n\n")
 
-    print("\tCode smell extraction complete")
-    print("\t\tGod Class = " + str(len(godClasses)))
-    print("\t\tLazy Class = " + str(len(lazyClasses)))
-    print("\t\tFeature Envy = " + str(len(featureEnvyClasses)))
+    summaryData = "\tCode smell extraction complete"
+    summaryData += "\n\t\tGod Class = " + str(len(godClasses))
+    summaryData += "\n\t\tLazy Class = " + str(len(lazyClasses))
+    summaryData += "\n\t\tFeature Envy = " + str(len(featureEnvyClasses))
+
+    log.write("\n" + summaryData)
+    print(summaryData + "\n")
 
 
 if __name__ == '__main__':
