@@ -1,6 +1,7 @@
 import sys
 import platform
 import statistics
+import numpy as np
 
 if platform.system() == "Windows":
     sys.path.append('C:/Program Files/SciTools/bin/pc-win64/Python')
@@ -56,11 +57,16 @@ def getTCC(classObj):
         return (numberOfShares / numberOfPairs) * 1.0
 
 def getLAA(classObj):
+    # TODO: Calculate LAA
     return 1
 
 def getFDP(classObj):
+    # TODO: Calculate FDP
     return 1
 
+def getLOC(classObj):
+    return classObj.metric(["CountLineCode"])['CountLineCode'] or 0
+    
 def extractSmells(projectPath, csvOutputPath, log):
     delm = ","
     includeMetricsInCsv = True
@@ -75,9 +81,14 @@ def extractSmells(projectPath, csvOutputPath, log):
     print("\tCalculating complex metrics for "+str(totalClassesCount) + " classes...")
 
     classLib = list()
-    allWMC = set()
+
+    # TODO: Improve such that 1st quartile can be cacluated without storing all
+    # observations (http://www.cs.wustl.edu/~jain/papers/ftp/psqr.pdf) for "Lazy Class"
+    allLOC = list()
+    allWMC = list()
 
     godClasses = set()
+    lazyClasses = set()
     featureEnvyClasses = set()
 
     for aclass in db.ents("Class"):
@@ -86,29 +97,33 @@ def extractSmells(projectPath, csvOutputPath, log):
 
         classLongName = aclass.longname()
 
-        classMetricATFD = getATFD(aclass)
-        classMetricWMC = getWMC(aclass)
-        classMetricTCC = getTCC(aclass)
+        classMetricATFD = 0 #getATFD(aclass)
+        classMetricWMC = 0# getWMC(aclass)
+        classMetricTCC = 0# getTCC(aclass)
         classMetricLAA = getLAA(aclass)
         classMetricFDP = getFDP(aclass)
+        classMetricLOC = getLOC(aclass)
 
-        allWMC.add(classMetricWMC)
+        allWMC.append(classMetricWMC)
+        allLOC.append(classMetricLOC)
 
         classLib.append({"name": classLongName, "ATFD": classMetricATFD, "WMC": classMetricWMC, "TCC": classMetricTCC,
-            "LAA": classMetricLAA, "FDP": classMetricFDP})
+            "LAA": classMetricLAA, "FDP": classMetricFDP, "LOC": classMetricLOC})
 
     print("\tApplying code smell thresholds")
 
     meanWMC = statistics.mean(allWMC)
     devWMC = statistics.pstdev(allWMC)
     veryHighWMC = meanWMC + (1.5 * devWMC) # 1.5 std. dev. above the mean (upper ~15%)
+    firstQuartileLOC = np.percentile(allLOC, 25)
 
     log.write("\n\nWMC: mean = " + str(meanWMC) + ", pstdev = " + str(devWMC) + ", VERY_HIGH = " + str(veryHighWMC) + "\n")
+    log.write("\n\nLOC: 1st Quartile = " + str(firstQuartileLOC) + "\n")
 
     outputFile = open(csvOutputPath, "w")
-    outputData = "Class" + delm + "God Class" + delm + "Feature Envy"
+    outputData = "Class" + delm + "God Class" + delm + "Lazy Class" + delm + "Feature Envy"
     if includeMetricsInCsv:
-            outputData += delm + delm.join(["Metric: ATFD", "Metric: WMC", "Metric: TCC"])
+            outputData += delm + delm.join(["Metric: ATFD", "Metric: WMC", "Metric: TCC", "Metric: LOC"])
     outputFile.write(outputData + "\n")
 
     for aclass in classLib:
@@ -117,6 +132,10 @@ def extractSmells(projectPath, csvOutputPath, log):
         # - WMC (Weighted Method Count) >= Very High
         # - TCC (Tight Class Cohesion) < 1/3
         classSmellGod = (aclass["ATFD"] > FEW) and (aclass["WMC"] >= veryHighWMC) and (aclass["TCC"] < ONE_THIRD)
+
+        # Lazy Class
+        # - LOC (Lines of Code) < 1st quartile of system
+        classSmellLazy = (aclass["LOC"] < firstQuartileLOC)
 
         # Feature Envy
         # - ATFD (Access to Foreign Data) > Few
@@ -127,18 +146,22 @@ def extractSmells(projectPath, csvOutputPath, log):
         if classSmellGod:
             godClasses.add(aclass["name"])
 
+        if classSmellLazy:
+            lazyClasses.add(aclass["name"])
+
         if classSmellFeatureEnvy:
             featureEnvyClasses.add(aclass["name"])
 
         log.write("God Class = " + str(classSmellGod) + "Feature Envy = " + str(classSmellFeatureEnvy) + "\tATFD = " + str(aclass["ATFD"]) 
             + "\tWMC = " + str(aclass["WMC"]) + "\tTCC = " + str(aclass["TCC"]) + "\t" + aclass["name"] + "\n")
 
-        csvLine = aclass["name"] + delm + str(classSmellGod) + delm + str(classSmellFeatureEnvy)
+        csvLine = aclass["name"] + delm + str(classSmellGod) + delm + str(classSmellLazy) + delm + str(classSmellFeatureEnvy)
         if includeMetricsInCsv:
-            csvLine += delm + delm.join([str(aclass["ATFD"]), str(aclass["WMC"]), str(aclass["TCC"])])
+            csvLine += delm + delm.join([str(aclass["ATFD"]), str(aclass["WMC"]), str(aclass["TCC"]), str(aclass["LOC"])])
         outputFile.write(csvLine + "\n")
 
     log.write("\n\nGod Classes (count = " + str(len(godClasses)) + "): " + str(godClasses) + "\n\n")
+    log.write("\n\nLazy Classes (count = " + str(len(lazyClasses)) + "): " + str(lazyClasses) + "\n\n")
     log.write("\n\nFeature Envy (count = " + str(len(featureEnvyClasses)) + "): " + str(featureEnvyClasses) + "\n\n")
 
     outputFile.close()
@@ -147,6 +170,7 @@ def extractSmells(projectPath, csvOutputPath, log):
 
     print("\tCode smell extraction complete")
     print("\t\tGod Class = " + str(len(godClasses)))
+    print("\t\tLazy Class = " + str(len(lazyClasses)))
     print("\t\tFeature Envy = " + str(len(featureEnvyClasses)))
 
 

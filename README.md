@@ -12,6 +12,8 @@ the top of both `understandapi.py` and `understandcli.py`.
   * You can request 1-year educational license for Understand [here](https://scitools.com/student/)
 * Python 3.4+: The script is written for Python 3.4+ and, on Windows, your 32-bit/64-bit version of Python 3 should match the 
 bit-ness of your Understand install (developed using Python 3.6 64-bit)
+* Python Libraries
+  * [NumPy](https://docs.scipy.org/doc/numpy/index.html): `pip3 install numpy`
 
 ## Usage
 `python3 getsmells.py [sourcePath] [outputPath (optional)]`   
@@ -26,12 +28,17 @@ bit-ness of your Understand install (developed using Python 3.6 64-bit)
 
 
 ## Smells
-All extracted smells are based off the criteria outlined in [Object-Oriented Metrics in Practice](http://www.springer.com/us/book/9783540244295) by [Michele Lanza](http://www.inf.usi.ch/lanza/index.html) and [Radu Marinescu](http://loose.upt.ro/reengineering/research/).
+Some extracted smells are based off the criteria outlined in [Object-Oriented Metrics in Practice](http://www.springer.com/us/book/9783540244295) by
+ [Michele Lanza](http://www.inf.usi.ch/lanza/index.html) and [Radu Marinescu](http://loose.upt.ro/reengineering/research/), while others are described
+ in [On the diffuseness and the impact on maintainability of code smells: a large scale empirical investigation](https://link.springer.com/article/10.1007/s10664-017-9535-z).
 
 **God Class**
 - ATFD (Access to Foreign Data) > Few
 - WMC (Weighted Method Count) >= Very High
 - TCC (Tight Class Cohesion) < 1/3
+
+**Lazy Class**
+- LOC (Lines of Code) < 1st quartile of system
 
 ## Useful Links
 **Understand API Documentation**   
