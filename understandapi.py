@@ -64,15 +64,27 @@ def getFDP(classObj):
     # TODO: Calculate FDP
     return 1
 
-def getLOC(classObj):
-    return classObj.metric(["CountLineCode"])['CountLineCode'] or 0
-    
+def getLOC(classOrMethodObj):
+    return classOrMethodObj.metric(["CountLineCode"])['CountLineCode'] or 0
+
+def getCMC(classObj, complexityThreshold):
+    # Returns "Complex Method Count" (number of methods in class with complexity greater than the threshold)
+    count = 0
+    for amethod in classObj.ents("Define", "Method"):
+        if getCyclomatic(amethod) > complexityThreshold:
+            count += 1
+    return count
+
+def getCyclomatic(methodObj):
+    return methodObj.metric(["Cyclomatic"])['Cyclomatic'] or 0
+
 def extractSmells(projectPath, csvOutputPath, log):
     delm = ","
     includeMetricsInCsv = True
 
     FEW = 4
     ONE_THIRD = 1/3
+    HIGH_METHOD_COMPLEXITY = 10
 
     db = understand.open(projectPath)
 
@@ -89,10 +101,11 @@ def extractSmells(projectPath, csvOutputPath, log):
 
     godClasses = set()
     lazyClasses = set()
+    complexClasses = set()
     featureEnvyClasses = set()
 
     for aclass in db.ents("Class"):
-        if (len(classLib)+1) % 250 == 0:
+        if (len(classLib)+1) % 200 == 0:
             print("\t\t" + str(round((len(classLib)/totalClassesCount)*100)) + "% complete" ) 
 
         classLongName = aclass.longname()
@@ -103,12 +116,13 @@ def extractSmells(projectPath, csvOutputPath, log):
         classMetricLAA = getLAA(aclass)
         classMetricFDP = getFDP(aclass)
         classMetricLOC = getLOC(aclass)
+        classMetricCMC = getCMC(aclass, HIGH_METHOD_COMPLEXITY)
 
         allWMC.append(classMetricWMC)
         allLOC.append(classMetricLOC)
 
         classLib.append({"name": classLongName, "ATFD": classMetricATFD, "WMC": classMetricWMC, "TCC": classMetricTCC,
-            "LAA": classMetricLAA, "FDP": classMetricFDP, "LOC": classMetricLOC})
+            "LAA": classMetricLAA, "FDP": classMetricFDP, "LOC": classMetricLOC, "CMC": classMetricCMC})
 
     print("\tCalculating system-wide averages and metrics")
 
@@ -123,9 +137,9 @@ def extractSmells(projectPath, csvOutputPath, log):
     print("\tApplying code smell thresholds")
 
     outputFile = open(csvOutputPath, "w")
-    outputData = delm.join(["Class", "God Class", "Lazy Class", "Feature Envy"])
+    outputData = delm.join(["Class", "God Class", "Lazy Class", "Complex Class", "Feature Envy"])
     if includeMetricsInCsv:
-            outputData += delm + delm.join(["Metric: ATFD", "Metric: WMC", "Metric: TCC", "Metric: LOC"])
+            outputData += delm + delm.join(["Metric: ATFD", "Metric: WMC", "Metric: TCC", "Metric: LOC", "Metric: CMC"])
     outputFile.write(outputData + "\n")
 
     for aclass in classLib:
@@ -139,6 +153,10 @@ def extractSmells(projectPath, csvOutputPath, log):
         # - LOC (Lines of Code) < 1st quartile of system
         classSmellLazy = (aclass["LOC"] < firstQuartileLOC)
 
+        # Complex Class
+        # - CMC (Complex Method Count; number of methods with complexity > HIGH_METHOD_COMPLEXITY) >= 1
+        classSmellComplex = (aclass["CMC"] >= 1)
+
         # Feature Envy
         # - ATFD (Access to Foreign Data) > Few
         # - LAA (Locality of Attribute Accesses) < 1/3
@@ -149,12 +167,14 @@ def extractSmells(projectPath, csvOutputPath, log):
             godClasses.add(aclass["name"])
         if classSmellLazy:
             lazyClasses.add(aclass["name"])
+        if classSmellComplex:
+            complexClasses.add(aclass["name"])
         if classSmellFeatureEnvy:
             featureEnvyClasses.add(aclass["name"])
 
-        csvLine = delm.join([aclass["name"], str(classSmellGod), str(classSmellLazy), str(classSmellFeatureEnvy)])
+        csvLine = delm.join([aclass["name"], str(classSmellGod), str(classSmellLazy), str(classSmellComplex), str(classSmellFeatureEnvy)])
         if includeMetricsInCsv:
-            csvLine += delm + delm.join([str(aclass["ATFD"]), str(aclass["WMC"]), str(aclass["TCC"]), str(aclass["LOC"])])
+            csvLine += delm + delm.join([str(aclass["ATFD"]), str(aclass["WMC"]), str(aclass["TCC"]), str(aclass["LOC"]), str(aclass["CMC"])])
         outputFile.write(csvLine + "\n")
 
     outputFile.close()
@@ -166,6 +186,7 @@ def extractSmells(projectPath, csvOutputPath, log):
     summaryData = "\tCode smell extraction complete"
     summaryData += "\n\t\tGod Class = " + str(len(godClasses))
     summaryData += "\n\t\tLazy Class = " + str(len(lazyClasses))
+    summaryData += "\n\t\tComplex Class = " + str(len(complexClasses))
     summaryData += "\n\t\tFeature Envy = " + str(len(featureEnvyClasses))
 
     log.write("\n" + summaryData)
