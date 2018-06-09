@@ -115,18 +115,22 @@ def extractSmells(projectPath, csvOutputPath, log):
     db = understand.open(projectPath)
 
     totalClassesCount = len(db.ents("Class"))
+    totalMethodsCount = len(db.ents("Method"))
 
     print("\tCalculating complex metrics for "+str(totalClassesCount) + " classes...")
 
     classLib = list()
+    methodLib = list()
 
-    allLOC = list()
-    allWMC = list()
+    allClassLOC = list()
+    allClassWMC = list()
+    allMethodLOC = list()
 
     godClasses = set()
     lazyClasses = set()
     complexClasses = set()
     featureEnvyClasses = set()
+    longMethods = set()
 
     for aclass in db.ents("Class"):
         if (len(classLib)+1) % 200 == 0:
@@ -136,31 +140,49 @@ def extractSmells(projectPath, csvOutputPath, log):
 
         classMetricATFD = getATFD(aclass)
         classMetricWMC = getWMC(aclass)
-        classMetricTCC = getTCC(aclass)
+        classMetricTCC = 0# getTCC(aclass)
         classMetricLAA = getLAA(aclass)
         classMetricFDP = getFDP(aclass)
         classMetricLOC = getLOC(aclass)
         classMetricCMC = getCMC(aclass, HIGH_METHOD_COMPLEXITY)
 
-        allWMC.append(classMetricWMC)
-        allLOC.append(classMetricLOC)
+        allClassWMC.append(classMetricWMC)
+        allClassLOC.append(classMetricLOC)
 
         classLib.append({"name": classLongName, "ATFD": classMetricATFD, "WMC": classMetricWMC, "TCC": classMetricTCC,
             "LAA": classMetricLAA, "FDP": classMetricFDP, "LOC": classMetricLOC, "CMC": classMetricCMC})
 
+    print("\tCalculating complex metrics for "+str(totalMethodsCount) + " methods...")
+
+    for amethod in db.ents("Method ~unresolved ~unknown"):
+        if (len(methodLib)+1) % 5000 == 0:
+            print("\t\t" + str(round((len(methodLib)/totalMethodsCount)*100)) + "%% complete" ) 
+
+        methodLongName = amethod.name()
+
+        methodMetricLOC = getLOC(amethod)
+
+        allMethodLOC.append(methodMetricLOC)
+
+        methodLib.append({"name": methodLongName, "LOC": methodMetricLOC})
+
     print("\tCalculating system-wide averages and metrics")
 
-    meanWMC = statistics.mean(allWMC)
-    devWMC = statistics.pstdev(allWMC)
-    veryHighWMC = meanWMC + (1.5 * devWMC) # 1.5 std. dev. above the mean (upper ~15%)
+    meanClassWMC = statistics.mean(allClassWMC)
+    devClassWMC = statistics.pstdev(allClassWMC)
+    veryHighClassWMC = meanClassWMC + (1.5 * devClassWMC) # 1.5 std. dev. above the mean (upper ~15%)
     # TODO(performance improvement): Improve such that 1st quartile LOC can be cacluated without storing all
     # observations (see http://www.cs.wustl.edu/~jain/papers/ftp/psqr.pdf) for "Lazy Class"
-    firstQuartileLOC = np.percentile(allLOC, 25) # Get the 1st quartitle
+    firstQuartileClassLOC = np.percentile(allClassLOC, 25) # Get the 1st quartitle
+    meanMethodLoc = statistics.mean(allMethodLOC)
 
-    log.write("WMC: mean = " + str(meanWMC) + ", pstdev = " + str(devWMC) + ", VERY_HIGH = " + str(veryHighWMC) + "\n")
-    log.write("LOC: 1st Quartile = " + str(firstQuartileLOC) + "\n")
+    log.write("Class WMC: mean = " + str(meanClassWMC) + ", pstdev = " + str(devClassWMC) + ", VERY_HIGH = " + str(veryHighClassWMC) + "\n")
+    log.write("Class LOC: 1st Quartile = " + str(firstQuartileClassLOC) + "\n")
+    log.write("Method LOC: mean = " + str(meanMethodLoc) + "\n")
 
     print("\tApplying code smell thresholds")
+
+    # Class-Level Smells
 
     outputFile = open(csvOutputPath, "w")
     outputData = delm.join(["Class", "God Class", "Lazy Class", "Complex Class", "Feature Envy"])
@@ -173,11 +195,11 @@ def extractSmells(projectPath, csvOutputPath, log):
         # - ATFD (Access to Foreign Data) > Few
         # - WMC (Weighted Method Count) >= Very High
         # - TCC (Tight Class Cohesion) < 1/3
-        classSmellGod = (aclass["ATFD"] > FEW) and (aclass["WMC"] >= veryHighWMC) and (aclass["TCC"] < ONE_THIRD)
+        classSmellGod = (aclass["ATFD"] > FEW) and (aclass["WMC"] >= veryHighClassWMC) and (aclass["TCC"] < ONE_THIRD)
 
         # Lazy Class
         # - LOC (Lines of Code) < 1st quartile of system
-        classSmellLazy = (aclass["LOC"] < firstQuartileLOC)
+        classSmellLazy = (aclass["LOC"] < firstQuartileClassLOC)
 
         # Complex Class
         # - CMC (Complex Method Count; number of methods with complexity > HIGH_METHOD_COMPLEXITY) >= 1
@@ -205,15 +227,44 @@ def extractSmells(projectPath, csvOutputPath, log):
 
     outputFile.close()
 
+    # Method-Level Smells
+
+    outputFile = open(csvOutputPath+"method.csv", "w")
+    outputData = delm.join(["Method", "Long Method"])
+    if includeMetricsInCsv:
+            outputData += delm + delm.join(["Metric: LOC"])
+    outputFile.write(outputData + "\n")
+
+    for amethod in methodLib:
+        # Long Method
+        # - LOC (Lines of Code) > mean of system
+        methodSmellLong = (amethod["LOC"] > meanMethodLoc)
+
+        if methodSmellLong:
+            longMethods.add(amethod["name"])
+
+        csvLine = delm.join([amethod["name"], str(methodSmellLong)])
+        if includeMetricsInCsv:
+            csvLine += delm + delm.join([str(amethod["LOC"])])
+        outputFile.write(csvLine + "\n")
+
+    outputFile.close()
+
     #log.write("\n\nGod Classes (count = " + str(len(godClasses)) + "): " + str(godClasses) + "\n\n")
     #log.write("\n\nLazy Classes (count = " + str(len(lazyClasses)) + "): " + str(lazyClasses) + "\n\n")
     #log.write("\n\nFeature Envy (count = " + str(len(featureEnvyClasses)) + "): " + str(featureEnvyClasses) + "\n\n")
 
     summaryData = "\tCode smell extraction complete"
+
+    summaryData = "\tClass-Level Smells:"
     summaryData += "\n\t\tGod Class = " + str(len(godClasses))
     summaryData += "\n\t\tLazy Class = " + str(len(lazyClasses))
     summaryData += "\n\t\tComplex Class = " + str(len(complexClasses))
     summaryData += "\n\t\tFeature Envy = " + str(len(featureEnvyClasses))
+
+    summaryData += "\n\tMethod-Level Smells:"
+    summaryData += "\n\t\tLong Method = " + str(len(longMethods))
+
 
     log.write("\n" + summaryData)
     print(summaryData + "\n")

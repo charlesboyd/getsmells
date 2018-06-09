@@ -11,7 +11,7 @@ def printCliHelp():
     print("outputPath: The directory to output the CSV with code smells, the debug output, and the Understand Projects "
           "(defaults to the current directory)")
 
-
+# The command line interface for the Get Smells tool
 def cli(args):
     if len(args) < 2:
         printCliHelp()
