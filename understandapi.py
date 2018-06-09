@@ -106,15 +106,6 @@ def getCyclomatic(methodObj):
 # -------------------------
 
 def extractSmells(projectPath, outputPath, runName, log):
-    outputCsvFileClasses = os.path.join(outputPath, runName + "-smells-classses.csv")
-    outputCsvFileMethods = os.path.join(outputPath, runName + "-smells-methods.csv")
-    outputTxtDirClasses = os.path.join(outputPath, runName + "-smelly-classes")
-    outputTxtDirMethods = os.path.join(outputPath, runName + "-ssmelly-methods")
-    if not os.path.exists(outputTxtDirClasses):
-        os.makedirs(outputTxtDirClasses)
-    if not os.path.exists(outputTxtDirMethods):
-        os.makedirs(outputTxtDirMethods)
-    
     delm = ","
     includeMetricsInCsv = True
 
@@ -124,6 +115,15 @@ def extractSmells(projectPath, outputPath, runName, log):
 
     classStatusUpdateInterval = 200
     methodStatusUpdateInterval = 5000
+
+    outputCsvFileClasses = os.path.join(outputPath, runName + "-smells-classses.csv")
+    outputCsvFileMethods = os.path.join(outputPath, runName + "-smells-methods.csv")
+    outputTxtDirClasses = os.path.join(outputPath, runName + "-smelly-classes")
+    outputTxtDirMethods = os.path.join(outputPath, runName + "-ssmelly-methods")
+    if not os.path.exists(outputTxtDirClasses):
+        os.makedirs(outputTxtDirClasses)
+    if not os.path.exists(outputTxtDirMethods):
+        os.makedirs(outputTxtDirMethods)
 
     db = understand.open(projectPath)
 
@@ -147,7 +147,7 @@ def extractSmells(projectPath, outputPath, runName, log):
 
         classMetricATFD = getATFD(aclass)
         classMetricWMC = getWMC(aclass)
-        classMetricTCC = 0#getTCC(aclass)
+        classMetricTCC = getTCC(aclass)
         classMetricLAA = getLAA(aclass)
         classMetricFDP = getFDP(aclass)
         classMetricLOC = getLOC(aclass)
@@ -189,7 +189,7 @@ def extractSmells(projectPath, outputPath, runName, log):
 
     print("\tApplying code smell thresholds")
 
-    # Class-Level Smells
+    # Apply Class-Level Smells
     classSmells = {'god': set(), 'lazy': set(), 'complex': set(), 'feature-envy': set()}
 
     outputFile = open(outputCsvFileClasses, "w")
@@ -235,7 +235,7 @@ def extractSmells(projectPath, outputPath, runName, log):
 
     outputFile.close()
 
-    # Method-Level Smells
+    # Apply Method-Level Smells
     methodSmells = {'long': set()}
 
     outputFile = open(outputCsvFileMethods, "w")
@@ -281,10 +281,8 @@ def extractSmells(projectPath, outputPath, runName, log):
     summaryData += "\n\t\tLazy Class = " + str(len(classSmells['lazy']))
     summaryData += "\n\t\tComplex Class = " + str(len(classSmells['complex']))
     summaryData += "\n\t\tFeature Envy = " + str(len(classSmells['feature-envy']))
-
     summaryData += "\n\tMethod-Level Smells:"
     summaryData += "\n\t\tLong Method = " + str(len(methodSmells['long']))
-
 
     log.write("\n" + summaryData)
     print(summaryData + "\n")

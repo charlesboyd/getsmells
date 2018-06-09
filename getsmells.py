@@ -4,12 +4,12 @@ import sys
 import os
 import platform
 
-
 def printCliHelp():
     print("Usage:\npython3 getsmells.py [sourcePath] [outputPath (optional)]\n")
     print("sourcePath: The path to the directory with a single project's code")
-    print("outputPath: The directory to output the CSV with code smells, the debug output, and the Understand Projects "
-          "(defaults to the current directory)")
+    print("outputPath: The directory to output the CSVs with code smells (one for class-level and one for method-level),\n"
+          "\tthe debug output (log), the Understand Project, the the list of classes/methods with each smell (defaults\n"
+          "\tto the current directory)")
 
 # The command line interface for the Get Smells tool
 def cli(args):
@@ -61,9 +61,10 @@ def cli(args):
 
 
 if __name__ == '__main__':
-    # cli(sys.argv)
+    cli(sys.argv)
 
     # For testing
+    '''
     if platform.system() == "Windows":
         cli(["",
          "C:/Users/cb1782/Downloads/apache-tomcat-7.0.82-src/apache-tomcat-7.0.82-src",
@@ -72,3 +73,4 @@ if __name__ == '__main__':
         cli(["",
          "/Users/charles/Documents/DIS/code/apache-tomcat-8.0.49-src",
          "/Users/charles/Documents/DIS/output1/"])
+    '''

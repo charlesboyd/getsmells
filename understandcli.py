@@ -10,7 +10,6 @@ if platform.system() == "Windows":
 else:
     undPath = "/Applications/Understand.app/Contents/MacOS/und"
 
-
 def makecmd(args):
     if platform.system() == "Windows":
         return args
@@ -51,8 +50,10 @@ if __name__ == '__main__':
         analyzeCode("C:/Users/cb1782/Downloads/apache-tomcat-7.0.82-src/apache-tomcat-7.0.82-src",
                     "C:/Users/cb1782/understandcli-project.udb",
                     logFile)
+        logFile.close()
     else:
         logFile = open("/Users/charles/Documents/DIS/understandcli-log.txt", "w+")
         analyzeCode("/Users/charles/Documents/DIS/code/apache-tomcat-8.0.49-src",
                     "/Users/charles/Documents/DIS/understandproject.udb",
                     logFile)
+        logFile.close()
