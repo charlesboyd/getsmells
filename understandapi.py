@@ -14,6 +14,13 @@ else:
 # help(understand)
 import understand
 
+
+# -------------------------
+#       METRICS
+# -------------------------
+
+# ATFD (Access to Foreign Data)
+# Class-Level Metric
 def getATFD(classObj):
     classATFD = 0
     for amethod in classObj.ents("Define", "Method"):
@@ -26,10 +33,15 @@ def getATFD(classObj):
     return classATFD
 
 
+# WMC (Weighted Method Count)
+# Class-Level Metric
+# = SumCyclomaticModified
 def getWMC(classObj):
     return classObj.metric(["SumCyclomaticModified"])['SumCyclomaticModified'] or 0
 
 
+# TCC (Tight Class Cohesion) 
+# Class-Level Metric
 def getTCC(classObj):
     methods = classObj.ents("Define", "Method")
     numberOfPairs = 0
@@ -56,27 +68,41 @@ def getTCC(classObj):
     else:
         return (numberOfShares / numberOfPairs) * 1.0
 
+# LAA (Locality of Attribute Accesses)
 def getLAA(classObj):
-    # TODO: Calculate LAA
+    # TODO(INCOMPLETE): Calculate LAA
     return 1
 
+# FDP (Foreign Data Providers)
 def getFDP(classObj):
-    # TODO: Calculate FDP
+    # TODO(INCOMPLETE): Calculate FDP
     return 1
 
+# LOC (Lines of Code)
+# Class- or metric-level metric
 def getLOC(classOrMethodObj):
     return classOrMethodObj.metric(["CountLineCode"])['CountLineCode'] or 0
 
+# CMC (Complex Method Count)
+# Returns number of methods in class with complexity greater than the threshold
+# Original, custom metric (used to determine Complex Class smell)
+# Class-level metric
 def getCMC(classObj, complexityThreshold):
-    # Returns "Complex Method Count" (number of methods in class with complexity greater than the threshold)
     count = 0
     for amethod in classObj.ents("Define", "Method"):
         if getCyclomatic(amethod) > complexityThreshold:
             count += 1
     return count
 
+# Cyclomatic Complexity
+# Class- or metric-level metric
 def getCyclomatic(methodObj):
     return methodObj.metric(["Cyclomatic"])['Cyclomatic'] or 0
+
+
+# -------------------------
+#       SMELLS
+# -------------------------
 
 def extractSmells(projectPath, csvOutputPath, log):
     delm = ","
@@ -94,8 +120,6 @@ def extractSmells(projectPath, csvOutputPath, log):
 
     classLib = list()
 
-    # TODO: Improve such that 1st quartile can be cacluated without storing all
-    # observations (http://www.cs.wustl.edu/~jain/papers/ftp/psqr.pdf) for "Lazy Class"
     allLOC = list()
     allWMC = list()
 
@@ -129,7 +153,9 @@ def extractSmells(projectPath, csvOutputPath, log):
     meanWMC = statistics.mean(allWMC)
     devWMC = statistics.pstdev(allWMC)
     veryHighWMC = meanWMC + (1.5 * devWMC) # 1.5 std. dev. above the mean (upper ~15%)
-    firstQuartileLOC = np.percentile(allLOC, 25)
+    # TODO(performance improvement): Improve such that 1st quartile LOC can be cacluated without storing all
+    # observations (see http://www.cs.wustl.edu/~jain/papers/ftp/psqr.pdf) for "Lazy Class"
+    firstQuartileLOC = np.percentile(allLOC, 25) # Get the 1st quartitle
 
     log.write("WMC: mean = " + str(meanWMC) + ", pstdev = " + str(devWMC) + ", VERY_HIGH = " + str(veryHighWMC) + "\n")
     log.write("LOC: 1st Quartile = " + str(firstQuartileLOC) + "\n")
