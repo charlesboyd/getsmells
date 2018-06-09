@@ -241,27 +241,23 @@ def extractSmells(projectPath, outputPath, runName, log):
 
     print("\tWriting list of smelly classes/methods")
 
+    summaryData = "\tCode smell extraction complete"
+    summaryData = "\tNumber of Class-Level Smells:"
     for smellName, classes in classSmells.items():
         outputFileName = os.path.join(outputTxtDirClasses, smellName + ".txt")
         outputFile = open(outputFileName, "w")
         for className in classes:
             outputFile.write(className + "\n")
         outputFile.close()
+        summaryData += "\n\t\t" + smellName +"  = " + str(len(classes))
+    summaryData += "\n\tNumber of Method-Level Smells:"
     for smellName, methods in methodSmells.items():
         outputFileName = os.path.join(outputTxtDirMethods, smellName + ".txt")
         outputFile = open(outputFileName, "w")
         for methodName in methods:
             outputFile.write(methodName + "\n")
         outputFile.close()
-
-    summaryData = "\tCode smell extraction complete"
-
-    summaryData = "\tClass-Level Smells:"
-    summaryData += "\n\t\tGod Class = " + str(len(classSmells['god']))
-    summaryData += "\n\t\tLazy Class = " + str(len(classSmells['lazy']))
-    summaryData += "\n\t\tComplex Class = " + str(len(classSmells['complex']))
-    summaryData += "\n\tMethod-Level Smells:"
-    summaryData += "\n\t\tLong Method = " + str(len(methodSmells['long']))
+        summaryData += "\n\t\t" + smellName +"  = " + str(len(methods))
 
     log.write("\n" + summaryData)
     print(summaryData + "\n")
