@@ -109,7 +109,7 @@ def extractSmells(projectPath, outputPath, runName, log):
     outputCsvFileClasses = os.path.join(outputPath, runName + "-smells-classses.csv")
     outputCsvFileMethods = os.path.join(outputPath, runName + "-smells-methods.csv")
     outputTxtDirClasses = os.path.join(outputPath, runName + "-smelly-classes")
-    outputTxtDirMethods = os.path.join(outputPath, runName + "-ssmelly-methods")
+    outputTxtDirMethods = os.path.join(outputPath, runName + "-smelly-methods")
     if not os.path.exists(outputTxtDirClasses):
         os.makedirs(outputTxtDirClasses)
     if not os.path.exists(outputTxtDirMethods):
