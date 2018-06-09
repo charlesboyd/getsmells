@@ -104,13 +104,16 @@ def getCyclomatic(methodObj):
 #       SMELLS
 # -------------------------
 
-def extractSmells(projectPath, csvOutputPath, log):
+def extractSmells(projectPath, csvOutputPathClasses, csvOutputPathMethods, log):
     delm = ","
     includeMetricsInCsv = True
 
     FEW = 4
     ONE_THIRD = 1/3
     HIGH_METHOD_COMPLEXITY = 10
+
+    classStatusUpdateInterval = 200
+    methodStatusUpdateInterval = 5000
 
     db = understand.open(projectPath)
 
@@ -133,14 +136,14 @@ def extractSmells(projectPath, csvOutputPath, log):
     longMethods = set()
 
     for aclass in db.ents("Class"):
-        if (len(classLib)+1) % 200 == 0:
+        if (len(classLib)+1) % classStatusUpdateInterval == 0:
             print("\t\t" + str(round((len(classLib)/totalClassesCount)*100)) + "% complete" ) 
 
         classLongName = aclass.longname()
 
         classMetricATFD = getATFD(aclass)
         classMetricWMC = getWMC(aclass)
-        classMetricTCC = 0# getTCC(aclass)
+        classMetricTCC = getTCC(aclass)
         classMetricLAA = getLAA(aclass)
         classMetricFDP = getFDP(aclass)
         classMetricLOC = getLOC(aclass)
@@ -155,7 +158,7 @@ def extractSmells(projectPath, csvOutputPath, log):
     print("\tCalculating complex metrics for "+str(totalMethodsCount) + " methods...")
 
     for amethod in db.ents("Method ~unresolved ~unknown"):
-        if (len(methodLib)+1) % 5000 == 0:
+        if (len(methodLib)+1) % methodStatusUpdateInterval == 0:
             print("\t\t" + str(round((len(methodLib)/totalMethodsCount)*100)) + "%% complete" ) 
 
         methodLongName = amethod.name()
@@ -184,7 +187,7 @@ def extractSmells(projectPath, csvOutputPath, log):
 
     # Class-Level Smells
 
-    outputFile = open(csvOutputPath, "w")
+    outputFile = open(csvOutputPathClasses, "w")
     outputData = delm.join(["Class", "God Class", "Lazy Class", "Complex Class", "Feature Envy"])
     if includeMetricsInCsv:
             outputData += delm + delm.join(["Metric: ATFD", "Metric: WMC", "Metric: TCC", "Metric: LOC", "Metric: CMC"])
@@ -229,7 +232,7 @@ def extractSmells(projectPath, csvOutputPath, log):
 
     # Method-Level Smells
 
-    outputFile = open(csvOutputPath+"method.csv", "w")
+    outputFile = open(csvOutputPathMethods, "w")
     outputData = delm.join(["Method", "Long Method"])
     if includeMetricsInCsv:
             outputData += delm + delm.join(["Metric: LOC"])
@@ -277,11 +280,13 @@ if __name__ == '__main__':
     if platform.system() == "Windows":
         logFile = open("C:/Users/cb1782/understandapi-log.txt", "w+")
         extractSmells("C:/Users/cb1782/MyUnderstandProject.udb",
-                      "C:/Users/cb1782/understandapi-csv.csv",
+                      "C:/Users/cb1782/understandapi-csv-classes.csv",
+                      "C:/Users/cb1782/understandapi-csv-methods.csv",
                       logFile)
     else:
         logFile = open("/Users/charles/Documents/DIS/understandapi-log.txt", "w+")
         extractSmells("/Users/charles/Documents/DIS/understandproject.udb",
-                    "/Users/charles/Documents/DIS/understandapi-csv.csv",
+                    "/Users/charles/Documents/DIS/understandapi-csv-classes.csv",
+                    "/Users/charles/Documents/DIS/understandapi-csv-methods.csv",
                     logFile)
 

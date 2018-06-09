@@ -23,8 +23,8 @@ bit-ness of your Understand install (developed using Python 3.6 64-bit)
 
 **Parameters**   
 `sourcePath`: The path to the directory with a single project's code   
-`outputPath`: The directory to output the CSV with code smells, the debug output, and the Understand Projects 
-(defaults to the current directory)   
+`outputPath`: The directory to output the CSVs with code smells (one for class-level and one for method-level), the debug
+ output (log), and the Understand Project (defaults to the current directory)   
 
 
 ## Smells
@@ -32,13 +32,19 @@ Some extracted smells are based off the criteria outlined in [Object-Oriented Me
  [Michele Lanza](http://www.inf.usi.ch/lanza/index.html) and [Radu Marinescu](http://loose.upt.ro/reengineering/research/), while others are described
  in [On the diffuseness and the impact on maintainability of code smells: a large scale empirical investigation](https://link.springer.com/article/10.1007/s10664-017-9535-z).
 
-**God Class**
+**God Class (Class-Level)**
 - ATFD (Access to Foreign Data) > Few
 - WMC (Weighted Method Count) >= Very High
 - TCC (Tight Class Cohesion) < 1/3
 
-**Lazy Class**
+**Lazy Class (Class-Level)**
 - LOC (Lines of Code) < 1st quartile of system
+
+**Complex Class (Class-Level)**
+- CMC (Complex Method Count) > 1
+
+**Long Method (Method-Level)**
+- LOC (Lines of Code) > mean of system
 
 ## Useful Links
 **Understand API Documentation**   
