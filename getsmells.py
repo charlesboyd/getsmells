@@ -56,7 +56,7 @@ def cli(args):
         return
 
     print("GetSmells complete!")
-    log.write("GetSmells Complete! (End of log)")
+    log.write("\n\nGetSmells Complete! (End of log)")
     log.close()
 
 
