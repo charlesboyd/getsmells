@@ -24,7 +24,7 @@ bit-ness of your Understand install (developed using Python 3.6 64-bit)
 **Parameters**   
 `sourcePath`: The path to the directory with a single project's code   
 `outputPath`: The directory to output the CSVs with code smells (one for class-level and one for method-level), the debug
- output (log), and the Understand Project (defaults to the current directory)   
+ output (log), the Understand Project, the the list of classes/methods with each smell (defaults to the current directory)   
 
 
 ## Smells

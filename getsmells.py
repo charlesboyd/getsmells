@@ -33,9 +33,6 @@ def cli(args):
             os.makedirs(outputPath)
 
     outputPath = os.path.normcase(os.path.join(outputPath, ''))  # fix slash direction and trailing slash
-
-    outputCsvFileClasses = os.path.join(outputPath, runName + "-smells-classses.csv")
-    outputCsvFileMethods = os.path.join(outputPath, runName + "-smells-methods.csv")
     outputLogFile = os.path.join(outputPath, runName + "-log.txt")
 
     welcomeMsg = "Starting GetSmells on '" + sourcePath + ' (output at ' + outputPath + ")"
@@ -54,7 +51,7 @@ def cli(args):
         return
 
     print("Step 2/2: Extracting code smells from metrics on '" + runName + "'")
-    if understandapi.extractSmells(projectPath, outputCsvFileClasses, outputCsvFileMethods, log) == 1:
+    if understandapi.extractSmells(projectPath, outputPath, runName, log) == 1:
         log.close()
         return
 

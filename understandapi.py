@@ -1,6 +1,7 @@
 import sys
 import platform
 import statistics
+import os
 import numpy as np
 
 if platform.system() == "Windows":
@@ -104,7 +105,16 @@ def getCyclomatic(methodObj):
 #       SMELLS
 # -------------------------
 
-def extractSmells(projectPath, csvOutputPathClasses, csvOutputPathMethods, log):
+def extractSmells(projectPath, outputPath, runName, log):
+    outputCsvFileClasses = os.path.join(outputPath, runName + "-smells-classses.csv")
+    outputCsvFileMethods = os.path.join(outputPath, runName + "-smells-methods.csv")
+    outputTxtDirClasses = os.path.join(outputPath, runName + "-smelly-classes")
+    outputTxtDirMethods = os.path.join(outputPath, runName + "-ssmelly-methods")
+    if not os.path.exists(outputTxtDirClasses):
+        os.makedirs(outputTxtDirClasses)
+    if not os.path.exists(outputTxtDirMethods):
+        os.makedirs(outputTxtDirMethods)
+    
     delm = ","
     includeMetricsInCsv = True
 
@@ -129,12 +139,6 @@ def extractSmells(projectPath, csvOutputPathClasses, csvOutputPathMethods, log):
     allClassWMC = list()
     allMethodLOC = list()
 
-    godClasses = set()
-    lazyClasses = set()
-    complexClasses = set()
-    featureEnvyClasses = set()
-    longMethods = set()
-
     for aclass in db.ents("Class"):
         if (len(classLib)+1) % classStatusUpdateInterval == 0:
             print("\t\t" + str(round((len(classLib)/totalClassesCount)*100)) + "% complete" ) 
@@ -143,7 +147,7 @@ def extractSmells(projectPath, csvOutputPathClasses, csvOutputPathMethods, log):
 
         classMetricATFD = getATFD(aclass)
         classMetricWMC = getWMC(aclass)
-        classMetricTCC = getTCC(aclass)
+        classMetricTCC = 0#getTCC(aclass)
         classMetricLAA = getLAA(aclass)
         classMetricFDP = getFDP(aclass)
         classMetricLOC = getLOC(aclass)
@@ -186,8 +190,9 @@ def extractSmells(projectPath, csvOutputPathClasses, csvOutputPathMethods, log):
     print("\tApplying code smell thresholds")
 
     # Class-Level Smells
+    classSmells = {'god': set(), 'lazy': set(), 'complex': set(), 'feature-envy': set()}
 
-    outputFile = open(csvOutputPathClasses, "w")
+    outputFile = open(outputCsvFileClasses, "w")
     outputData = delm.join(["Class", "God Class", "Lazy Class", "Complex Class", "Feature Envy"])
     if includeMetricsInCsv:
             outputData += delm + delm.join(["Metric: ATFD", "Metric: WMC", "Metric: TCC", "Metric: LOC", "Metric: CMC"])
@@ -215,13 +220,13 @@ def extractSmells(projectPath, csvOutputPathClasses, csvOutputPathMethods, log):
         classSmellFeatureEnvy = (aclass["ATFD"] > FEW) and (aclass["LAA"] < ONE_THIRD) and (aclass["FDP"] <= FEW )
 
         if classSmellGod:
-            godClasses.add(aclass["name"])
+            classSmells['god'].add(aclass["name"])
         if classSmellLazy:
-            lazyClasses.add(aclass["name"])
+            classSmells['lazy'].add(aclass["name"])
         if classSmellComplex:
-            complexClasses.add(aclass["name"])
+            classSmells['complex'].add(aclass["name"])
         if classSmellFeatureEnvy:
-            featureEnvyClasses.add(aclass["name"])
+            classSmells['feature-envy'].add(aclass["name"])
 
         csvLine = delm.join([aclass["name"], str(classSmellGod), str(classSmellLazy), str(classSmellComplex), str(classSmellFeatureEnvy)])
         if includeMetricsInCsv:
@@ -231,8 +236,9 @@ def extractSmells(projectPath, csvOutputPathClasses, csvOutputPathMethods, log):
     outputFile.close()
 
     # Method-Level Smells
+    methodSmells = {'long': set()}
 
-    outputFile = open(csvOutputPathMethods, "w")
+    outputFile = open(outputCsvFileMethods, "w")
     outputData = delm.join(["Method", "Long Method"])
     if includeMetricsInCsv:
             outputData += delm + delm.join(["Metric: LOC"])
@@ -244,7 +250,7 @@ def extractSmells(projectPath, csvOutputPathClasses, csvOutputPathMethods, log):
         methodSmellLong = (amethod["LOC"] > meanMethodLoc)
 
         if methodSmellLong:
-            longMethods.add(amethod["name"])
+            methodSmells['long'].add(amethod["name"])
 
         csvLine = delm.join([amethod["name"], str(methodSmellLong)])
         if includeMetricsInCsv:
@@ -253,20 +259,31 @@ def extractSmells(projectPath, csvOutputPathClasses, csvOutputPathMethods, log):
 
     outputFile.close()
 
-    #log.write("\n\nGod Classes (count = " + str(len(godClasses)) + "): " + str(godClasses) + "\n\n")
-    #log.write("\n\nLazy Classes (count = " + str(len(lazyClasses)) + "): " + str(lazyClasses) + "\n\n")
-    #log.write("\n\nFeature Envy (count = " + str(len(featureEnvyClasses)) + "): " + str(featureEnvyClasses) + "\n\n")
+    print("\tWriting list of smelly classes/methods")
+
+    for smellName, classes in classSmells.items():
+        outputFileName = os.path.join(outputTxtDirClasses, smellName + ".txt")
+        outputFile = open(outputFileName, "w")
+        for className in classes:
+            outputFile.write(className + "\n")
+        outputFile.close()
+    for smellName, methods in methodSmells.items():
+        outputFileName = os.path.join(outputTxtDirMethods, smellName + ".txt")
+        outputFile = open(outputFileName, "w")
+        for methodName in methods:
+            outputFile.write(methodName + "\n")
+        outputFile.close()
 
     summaryData = "\tCode smell extraction complete"
 
     summaryData = "\tClass-Level Smells:"
-    summaryData += "\n\t\tGod Class = " + str(len(godClasses))
-    summaryData += "\n\t\tLazy Class = " + str(len(lazyClasses))
-    summaryData += "\n\t\tComplex Class = " + str(len(complexClasses))
-    summaryData += "\n\t\tFeature Envy = " + str(len(featureEnvyClasses))
+    summaryData += "\n\t\tGod Class = " + str(len(classSmells['god']))
+    summaryData += "\n\t\tLazy Class = " + str(len(classSmells['lazy']))
+    summaryData += "\n\t\tComplex Class = " + str(len(classSmells['complex']))
+    summaryData += "\n\t\tFeature Envy = " + str(len(classSmells['feature-envy']))
 
     summaryData += "\n\tMethod-Level Smells:"
-    summaryData += "\n\t\tLong Method = " + str(len(longMethods))
+    summaryData += "\n\t\tLong Method = " + str(len(methodSmells['long']))
 
 
     log.write("\n" + summaryData)
@@ -278,15 +295,17 @@ if __name__ == '__main__':
 
     # Default project and output path
     if platform.system() == "Windows":
-        logFile = open("C:/Users/cb1782/understandapi-log.txt", "w+")
+        logFile = open("C:/Users/cb1782/getsmells-test-output/understandapi-log.txt", "w+")
         extractSmells("C:/Users/cb1782/MyUnderstandProject.udb",
-                      "C:/Users/cb1782/understandapi-csv-classes.csv",
-                      "C:/Users/cb1782/understandapi-csv-methods.csv",
+                      "C:/Users/cb1782/getsmells-test-output/",
+                      "default",
                       logFile)
+        logFile.close()
     else:
-        logFile = open("/Users/charles/Documents/DIS/understandapi-log.txt", "w+")
+        logFile = open("/Users/charles/Documents/DIS/getsmells-test-output/understandapi-log.txt", "w+")
         extractSmells("/Users/charles/Documents/DIS/understandproject.udb",
-                    "/Users/charles/Documents/DIS/understandapi-csv-classes.csv",
-                    "/Users/charles/Documents/DIS/understandapi-csv-methods.csv",
+                    "/Users/charles/Documents/DIS/getsmells-test-output/",
+                    "default",
                     logFile)
+        logFile.close()
 
