@@ -8,8 +8,8 @@ def printCliHelp():
     print("Usage:\npython3 getsmells.py [sourcePath] [outputPath (optional)]\n")
     print("sourcePath: The path to the directory with a single project's code")
     print("outputPath: The directory to output the CSVs with code smells (one for class-level and one for method-level),\n"
-          "\tthe debug output (log), the Understand Project, the the list of classes/methods with each smell (defaults\n"
-          "\tto the current directory)")
+          "\tthe debug output (log), the Understand Project, the the list of classes/methods with each smell (default:\n"
+          "\tcreate a new subdirectory in the current directory)")
 
 # The command line interface for the Get Smells tool
 def cli(args):
@@ -29,8 +29,10 @@ def cli(args):
     outputPath = os.path.dirname(os.path.realpath(__file__))
     if len(args) >= 3:
         outputPath = args[2]
-        if not os.path.exists(outputPath):
-            os.makedirs(outputPath)
+    else:
+        outputPath = os.path.join(outputPath, "getsmells-output")
+    if not os.path.exists(outputPath):
+        os.makedirs(outputPath)
 
     outputPath = os.path.normcase(os.path.join(outputPath, ''))  # fix slash direction and trailing slash
     outputLogFile = os.path.join(outputPath, runName + "-log.txt")
