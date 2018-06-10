@@ -8,7 +8,7 @@ def printCliHelp():
     print("Usage:\npython3 getsmells.py [sourcePath] [outputPath (optional)]\n")
     print("sourcePath: The path to the directory with a single project's code")
     print("outputPath: The directory to output the CSVs with code smells (one for class-level and one for method-level),\n"
-          "\tthe debug output (log), the Understand Project, the the list of classes/methods with each smell (default:\n"
+          "\tthe debug output (log), the Understand Project, the list of classes/methods with each smell (default:\n"
           "\tcreate a new subdirectory in the current directory)")
 
 # The command line interface for the Get Smells tool

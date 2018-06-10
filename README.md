@@ -24,7 +24,7 @@ bit-ness of your Understand install (developed using Python 3.6 64-bit)
 **Parameters**   
 `sourcePath`: The path to the directory with a single project's code   
 `outputPath`: The directory to output the CSVs with code smells (one for class-level and one for method-level), the debug
- output (log), the Understand Project, the the list of classes/methods with each smell (default: create a new subdirectory
+ output (log), the Understand Project, the list of classes/methods with each smell (default: create a new subdirectory
  in the current directory)   
 
 
@@ -46,6 +46,12 @@ Some extracted smells are based off the criteria outlined in [Object-Oriented Me
 
 **Long Method (Method-Level)**
 - LOC (Lines of Code) > mean of system
+
+## Files
+`getsmells.py`: "Main" file used to run GetSmells; contains the GetSmells command-line interface   
+`understandcli.py`: Interacts with the Understand command-line interface (CLI); creates and Understand project with a given source code directory and starts Understands analysis   
+`understandapi.py`: Interacts with the Understand Python API to extract information from the Understand project; calculates each custom ("complex") metric and applies thresholds to determine which classes/methods are subject to code smells   
+
 
 ## Useful Links
 **Understand API Documentation**   
